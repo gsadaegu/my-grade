@@ -3,7 +3,7 @@ const $ = id => document.getElementById(id);
 const config = window.APP_CONFIG || {};
 const connected = Boolean(config.supabaseUrl && config.supabasePublishableKey);
 const db = connected ? createClient(config.supabaseUrl, config.supabasePublishableKey) : null;
-const asset = {head:'assets/heart.png',shoulder:'assets/smile.png',belly:'assets/thinking.png',feet:'assets/crying.png'};
+const asset = {head:'heart.png',shoulder:'smile.png',belly:'thinking.png',feet:'crying.png'};
 const reactions = {head:'와, 이번 학기 폼 미쳤다! 💖',shoulder:'오? 꽤 잘하고 있는데? 😎',belly:'음… 다음 학기엔 더 올라가 볼까? 🤔',feet:'이번 학기는 쉽지 않았네… 다음 학기는 반등 가자! 🥹'};
 const cutoffs = [3.78,3.02,1.98]; // 시연용 점수 구간. 실제 백분위가 아닙니다.
 let schools = [], school = '', scale = 4.5, grade = null, normalized = null, tab = 'national';
