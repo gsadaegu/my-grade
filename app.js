@@ -3,25 +3,28 @@ const $ = id => document.getElementById(id);
 const config = window.APP_CONFIG || {};
 const connected = Boolean(config.supabaseUrl && config.supabasePublishableKey);
 const db = connected ? createClient(config.supabaseUrl, config.supabasePublishableKey) : null;
-const asset = {head:'/my-grade/heart.png?v=20261030b',shoulder:'/my-grade/smile.png?v=20261030b',belly:'/my-grade/thinking.png?v=20261030b',feet:'/my-grade/crying.png?v=20261030b'};
+const asset = {head:'heart.png',shoulder:'smile.png',belly:'thinking.png',feet:'crying.png'};
 const reactions = {head:'와, 이번 학기 폼 미쳤다! 💖',shoulder:'오? 꽤 잘하고 있는데? 😎',belly:'음… 다음 학기엔 더 올라가 볼까? 🤔',feet:'이번 학기는 쉽지 않았네… 다음 학기는 반등 가자! 🥹'};
 const cutoffs = [3.78,3.02,1.98]; // 시연용 점수 구간. 실제 백분위가 아닙니다.
-let schools = [], school = '', scale = 4.5, grade = null, normalized = null, tab = 'national';
+let schools = [], school = '', customSchool = false, scale = 4.5, grade = null, normalized = null, tab = 'national';
 let hasSaved = false, latestStats = null, modalFocus = null;
 try { const r = await fetch('./schools.json'); schools = await r.json(); } catch(e) { $('schoolHint').textContent='학교 목록 로드 실패: 사이트를 웹서버로 열어 주세요.'; }
-const schoolInput=$('schoolSearch'), options=$('schoolOptions');
+const schoolInput=$('schoolSearch'), options=$('schoolOptions'), missingSchool=$('missingSchool');
 function showSuggestions(){
  const term=schoolInput.value.trim().toLocaleLowerCase();
  const hits = (term ? schools.filter(s=>s.toLocaleLowerCase().includes(term)) : schools).slice(0,15);
  options.replaceChildren();
- hits.forEach(name=>{ const b=document.createElement('button'); b.type='button'; b.className='school-option'; b.setAttribute('role','option'); b.textContent=name; b.onclick=()=>{school=name;schoolInput.value=name;options.hidden=true;schoolInput.setAttribute('aria-expanded','false');$('schoolHint').textContent=`✓ ${name} 선택됨`;validate();};options.appendChild(b);});
- if(!hits.length){const d=document.createElement('div');d.className='school-option';d.textContent='검색 결과가 없어요. 목록 보완이 필요합니다.';options.appendChild(d);}
+ missingSchool.hidden = Boolean(hits.length) || !term;
+ if(!missingSchool.hidden) $('useCustomSchool').textContent = `“${schoolInput.value.trim().slice(0,60)}” 이름으로 체험하기`; 
+ hits.forEach(name=>{ const b=document.createElement('button'); b.type='button'; b.className='school-option'; b.setAttribute('role','option'); b.textContent=name; b.onclick=()=>{customSchool=false;school=name;schoolInput.value=name;options.hidden=true;schoolInput.setAttribute('aria-expanded','false');$('schoolHint').textContent=`✓ ${name} 선택됨`;validate();};options.appendChild(b);});
+ if(!hits.length){const d=document.createElement('div');d.className='school-option';d.textContent='목록에 없는 학교예요. 아래 임시 선택을 이용해 주세요.';options.appendChild(d);}
  options.hidden=false;schoolInput.setAttribute('aria-expanded','true');
 }
 schoolInput.addEventListener('focus',showSuggestions);
-schoolInput.addEventListener('input',()=>{school='';$('schoolHint').textContent='목록에서 학교를 선택해 주세요.';showSuggestions();validate();});
-$('clearSchool').onclick=()=>{school='';schoolInput.value='';schoolInput.focus();showSuggestions();validate();};
+schoolInput.addEventListener('input',()=>{school='';customSchool=false;$('schoolHint').textContent='목록에서 학교를 선택해 주세요.';showSuggestions();validate();});
+$('clearSchool').onclick=()=>{school='';customSchool=false;missingSchool.hidden=true;schoolInput.value='';schoolInput.focus();showSuggestions();validate();};
 document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap')){options.hidden=true;schoolInput.setAttribute('aria-expanded','false');}});
+$('useCustomSchool').addEventListener('click',()=>{ const name=schoolInput.value.trim().replace(/\s+/g,' '); if(name.length<2||name.length>60){$('schoolHint').textContent='학교명은 2~60자로 입력해 주세요.';return;} school=name;customSchool=true;schoolInput.value=name;options.hidden=true;missingSchool.hidden=true;$('schoolHint').textContent=`✓ ${name} · 임시 선택 (실제 학교 등록 아님)`;validate();});
 document.querySelectorAll('[data-scale]').forEach(b=>b.onclick=()=>{scale=Number(b.dataset.scale);document.querySelectorAll('[data-scale]').forEach(x=>x.classList.toggle('selected',x===b));$('gpaInput').max=String(scale);validate();});
 function validGrade(){ const s=$('gpaInput').value.trim(), n=Number(s);return s!==''&&Number.isFinite(n)&&n>=0&&n<=scale&&/^\d+(?:\.\d{1,2})?$/.test(s); }
 function validate(){ $('checkBtn').disabled=!(Boolean(school)&&validGrade()); }
@@ -39,8 +42,9 @@ function renderVisual(){let z=zoneForScore(normalized), pos=position(normalized)
 }
 function setInfo(title,desc){$('statTitle').textContent=title;$('statDescription').textContent=desc;}
 async function ensureAuth(){let {data:{session},error}=await db.auth.getSession();if(error)throw error;if(!session){const response=await db.auth.signInAnonymously();if(response.error)throw response.error;} }
-async function saveGrade(){ if(!connected){hasSaved=false;return;} await ensureAuth(); const {error}=await db.rpc('save_my_grade',{p_school:school,p_grade:grade,p_scale:scale});if(error)throw error;hasSaved=true; }
+async function saveGrade(){ if(customSchool){hasSaved=false;return;} if(!connected){hasSaved=false;return;} await ensureAuth(); const {error}=await db.rpc('save_my_grade',{p_school:school,p_grade:grade,p_scale:scale});if(error)throw error;hasSaved=true; }
 async function loadStats(){latestStats=null;renderVisual();
+ if(customSchool){setInfo('임시 학교 선택 · 체험 모드', '목록에 없는 학교를 직접 입력했어요. 실제 학점 저장이나 전국·학교별 통계 참여는 아직 할 수 없어요. 학교명은 추후 공식 목록에 추가해야 해요.');return;}
  if(!connected){setInfo('체험 모드 · 실제 비교 데이터 미연결','파란 점선과 구간은 점수 기반 시연용이에요. Supabase 연결 후 실제 참여자 통계로 바뀝니다.');return;}
  if(!hasSaved){setInfo('체험 모드 · 통계에 참여하지 않았어요','저장에 동의하지 않았거나 저장이 완료되지 않았어요. 파란 점선은 점수 시연용입니다.');return;}
  try {let {data,error}=await db.rpc('get_grade_summary',{p_scope:tab});if(error)throw error;latestStats=Array.isArray(data)?data[0]:data;
@@ -50,7 +54,7 @@ async function loadStats(){latestStats=null;renderVisual();
 function showResult(){ $('backdrop').hidden=true;document.body.style.overflow='';$('entry').hidden=true;$('result').hidden=false;window.scrollTo({top:0,behavior:'smooth'});$('score').textContent=scale===4.3?`내 누적 평균 학점 ${grade.toFixed(2)} / 4.3 → ${normalized.toFixed(2)} / 4.5`:`내 누적 평균 학점 ${normalized.toFixed(2)} / 4.5`;loadStats();}
 function showModal(){modalFocus=document.activeElement;$('backdrop').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus();}
 function closeModal(){if($('backdrop').hidden)return;$('backdrop').hidden=true;document.body.style.overflow='';if(modalFocus?.focus)modalFocus.focus();}
-$('gradeForm').addEventListener('submit',async e=>{e.preventDefault();if(!school||!validGrade()){validate();return;}grade=Number($('gpaInput').value);normalized=Math.round((scale===4.3?grade/4.3*4.5:grade)*100)/100;$('formError').hidden=true;const b=$('checkBtn');b.disabled=true;b.textContent='결과 준비 중…';try{if($('storeConsent').checked) await saveGrade();else hasSaved=false;}catch(err){hasSaved=false;$('formError').hidden=false;$('formError').textContent='학점 저장에 실패했어요. 결과는 체험용으로 표시됩니다. 연결 설정을 확인해 주세요.';console.error(err);}finally{b.textContent='내 학점 위치 확인하기 →';validate();}
+$('gradeForm').addEventListener('submit',async e=>{e.preventDefault();if(!school||!validGrade()){validate();return;}grade=Number($('gpaInput').value);normalized=Math.round((scale===4.3?grade/4.3*4.5:grade)*100)/100;$('formError').hidden=true;const b=$('checkBtn');b.disabled=true;b.textContent='결과 준비 중…';try{if($('storeConsent').checked && !customSchool) await saveGrade();else hasSaved=false;}catch(err){hasSaved=false;$('formError').hidden=false;$('formError').textContent='학점 저장에 실패했어요. 결과는 체험용으로 표시됩니다. 연결 설정을 확인해 주세요.';console.error(err);}finally{b.textContent='내 학점 위치 확인하기 →';validate();}
  showResult();showModal();});
 $('closeModal').onclick=closeModal;$('viewResult').onclick=closeModal;
 $('backdrop').addEventListener('click',e=>{if(e.target===$('backdrop'))closeModal();});
