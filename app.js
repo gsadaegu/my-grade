@@ -1,409 +1,67 @@
-
-const $ = (sel) => document.querySelector(sel);
-const $$ = (sel) => [...document.querySelectorAll(sel)];
-
-const state = {
-  schools: [],
-  selectedSchool: '',
-  currentScale: 4.5,
-  currentTab: 'national',
-  lastFocus: null,
-  modalShownThisSubmit: false,
-};
-
-const elements = {
-  entryPage: $('#entryPage'),
-  resultPage: $('#resultPage'),
-  gradeForm: $('#gradeForm'),
-  schoolSearch: $('#schoolSearch'),
-  clearSchool: $('#clearSchool'),
-  schoolOptions: $('#schoolOptions'),
-  schoolHint: $('#schoolHint'),
-  missingSchoolBox: $('#missingSchoolBox'),
-  useCustomSchool: $('#useCustomSchool'),
-  gpaInput: $('#gpaInput'),
-  storeConsent: $('#storeConsent'),
-  formError: $('#formError'),
-  submitBtn: $('#submitBtn'),
-  scaleButtons: $$('.scale-btn'),
-  tabNational: $('#tabNational'),
-  tabSchool: $('#tabSchool'),
-  resultHeadline: $('#resultHeadline'),
-  resultScore: $('#resultScore'),
-  backToEntry: $('#backToEntry'),
-  labelHead: $('#labelHead'),
-  labelShoulder: $('#labelShoulder'),
-  labelBelly: $('#labelBelly'),
-  labelFeet: $('#labelFeet'),
-  capybaraImg: $('#capybaraImg'),
-  myLine: $('#myLine'),
-  promoModal: $('#promoModal'),
-  closeModal: $('#closeModal'),
-  justShowResult: $('#justShowResult'),
-};
-
-const nationalDefaultAnchors = { head: 4.5, shoulder: 3.54, belly: 2.90, feet: 1.20 };
-const schoolFallbackAnchors = { head: 4.5, shoulder: 3.78, belly: 3.02, feet: 1.98 };
-const lineTopMap = { head: 55, shoulder: 260, belly: 500, feet: 715 };
-const lineTopMapSmall = { head: 48, shoulder: 240, belly: 470, feet: 665 };
-
-function currentLineMap() {
-  return window.innerWidth <= 420 ? lineTopMapSmall : lineTopMap;
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+const $ = id => document.getElementById(id);
+const config = window.APP_CONFIG || {};
+const connected = Boolean(config.supabaseUrl && config.supabasePublishableKey);
+const db = connected ? createClient(config.supabaseUrl, config.supabasePublishableKey) : null;
+const asset = {head:'heart.png',shoulder:'smile.png',belly:'thinking.png',feet:'crying.png'};
+const reactions = {head:'와, 이번 학기 폼 미쳤다! 💖',shoulder:'오? 꽤 잘하고 있는데? 😎',belly:'음… 다음 학기엔 더 올라가 볼까? 🤔',feet:'이번 학기는 쉽지 않았네… 다음 학기는 반등 가자! 🥹'};
+const cutoffs = [3.78,3.02,1.98]; // 시연용 점수 구간. 실제 백분위가 아닙니다.
+let schools = [], school = '', customSchool = false, scale = 4.5, grade = null, normalized = null, tab = 'national';
+let hasSaved = false, latestStats = null, modalFocus = null;
+try { const r = await fetch('./schools.json'); schools = await r.json(); } catch(e) { $('schoolHint').textContent='학교 목록 로드 실패: 사이트를 웹서버로 열어 주세요.'; }
+const schoolInput=$('schoolSearch'), options=$('schoolOptions'), missingSchool=$('missingSchool');
+function showSuggestions(){
+ const term=schoolInput.value.trim().toLocaleLowerCase();
+ const hits = (term ? schools.filter(s=>s.toLocaleLowerCase().includes(term)) : schools).slice(0,15);
+ options.replaceChildren();
+ missingSchool.hidden = Boolean(hits.length) || !term;
+ if(!missingSchool.hidden) $('useCustomSchool').textContent = `“${schoolInput.value.trim().slice(0,60)}” 이름으로 체험하기`; 
+ hits.forEach(name=>{ const b=document.createElement('button'); b.type='button'; b.className='school-option'; b.setAttribute('role','option'); b.textContent=name; b.onclick=()=>{customSchool=false;school=name;schoolInput.value=name;options.hidden=true;schoolInput.setAttribute('aria-expanded','false');$('schoolHint').textContent=`✓ ${name} 선택됨`;validate();};options.appendChild(b);});
+ if(!hits.length){const d=document.createElement('div');d.className='school-option';d.textContent='목록에 없는 학교예요. 아래 임시 선택을 이용해 주세요.';options.appendChild(d);}
+ options.hidden=false;schoolInput.setAttribute('aria-expanded','true');
 }
-
-async function init() {
-  await loadSchools();
-  bindEvents();
-  renderScaleButtons();
-  updateSubmitAvailability();
-  updateClearButton();
+schoolInput.addEventListener('focus',showSuggestions);
+schoolInput.addEventListener('input',()=>{school='';customSchool=false;$('schoolHint').textContent='목록에서 학교를 선택해 주세요.';showSuggestions();validate();});
+$('clearSchool').onclick=()=>{school='';customSchool=false;missingSchool.hidden=true;schoolInput.value='';schoolInput.focus();showSuggestions();validate();};
+document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap')){options.hidden=true;schoolInput.setAttribute('aria-expanded','false');}});
+$('useCustomSchool').addEventListener('click',()=>{ const name=schoolInput.value.trim().replace(/\s+/g,' '); if(name.length<2||name.length>60){$('schoolHint').textContent='학교명은 2~60자로 입력해 주세요.';return;} school=name;customSchool=true;schoolInput.value=name;options.hidden=true;missingSchool.hidden=true;$('schoolHint').textContent=`✓ ${name} · 임시 선택 (실제 학교 등록 아님)`;validate();});
+document.querySelectorAll('[data-scale]').forEach(b=>b.onclick=()=>{scale=Number(b.dataset.scale);document.querySelectorAll('[data-scale]').forEach(x=>x.classList.toggle('selected',x===b));$('gpaInput').max=String(scale);validate();});
+function validGrade(){ const s=$('gpaInput').value.trim(), n=Number(s);return s!==''&&Number.isFinite(n)&&n>=0&&n<=scale&&/^\d+(?:\.\d{1,2})?$/.test(s); }
+function validate(){ $('checkBtn').disabled=!(Boolean(school)&&validGrade()); }
+$('gpaInput').addEventListener('input',validate);
+function zoneForScore(score){return score>=cutoffs[0]?'head':score>=cutoffs[1]?'shoulder':score>=cutoffs[2]?'belly':'feet';}
+function position(score){const values=[4.5,3.78,3.02,1.98,0],ys=[10,33,56,79,94];for(let i=0;i<4;i++){if(score>=values[i+1])return ys[i]+(values[i]-score)/(values[i]-values[i+1])*(ys[i+1]-ys[i]);}return 94;}
+function renderVisual(){let z=zoneForScore(normalized), pos=position(normalized);if(latestStats && latestStats.count>=30){
+ // 통계 백분위 구간으로 표정 변경 (상위 25%,50%,75% 경계)
+ const topPct=latestStats.top_percent;
+ z=topPct<=25?'head':topPct<=50?'shoulder':topPct<=75?'belly':'feet';
+ pos=Math.min(94,Math.max(10,10+(topPct/100)*84));
 }
-
-async function loadSchools() {
-  try {
-    const res = await fetch('schools.json?v=20261031b');
-    state.schools = await res.json();
-  } catch (e) {
-    state.schools = ['대구대학교', '경북대학교', '연세대학교', '고려대학교', '한양대학교', '관동대학교'];
-  }
+ $('capybara').src=asset[z];$('capybara').alt=`${z==='head'?'하트눈':z==='shoulder'?'웃음':z==='belly'?'고민':'울음'} 카피바라`;
+ $('reaction').textContent=reactions[z];$('meLine').style.top=pos+'%';
 }
-
-function bindEvents() {
-  elements.scaleButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      state.currentScale = Number(btn.dataset.scale);
-      renderScaleButtons();
-      elements.gpaInput.max = String(state.currentScale);
-      updateSubmitAvailability();
-    });
-  });
-
-  elements.schoolSearch.addEventListener('input', onSchoolInput);
-  elements.schoolSearch.addEventListener('focus', onSchoolInput);
-  elements.schoolSearch.addEventListener('keydown', onSchoolKeydown);
-  elements.clearSchool.addEventListener('click', clearSchool);
-  elements.useCustomSchool.addEventListener('click', selectCustomSchool);
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.search-wrap') && !e.target.closest('.school-options')) {
-      hideSchoolOptions();
-    }
-  });
-
-  elements.gpaInput.addEventListener('input', updateSubmitAvailability);
-  elements.gradeForm.addEventListener('submit', handleSubmit);
-  elements.backToEntry.addEventListener('click', backToEntry);
-
-  elements.tabNational.addEventListener('click', () => switchTab('national'));
-  elements.tabSchool.addEventListener('click', () => switchTab('school'));
-
-  elements.closeModal.addEventListener('click', closeModal);
-  elements.justShowResult.addEventListener('click', closeModal);
-  elements.promoModal.addEventListener('click', (e) => {
-    if (e.target === elements.promoModal) closeModal();
-  });
-
-  window.addEventListener('resize', () => {
-    if (!elements.resultPage.hidden) updateResultView(false);
-  });
-}
-
-function renderScaleButtons() {
-  elements.scaleButtons.forEach((btn) => {
-    const active = Number(btn.dataset.scale) === state.currentScale;
-    btn.classList.toggle('active', active);
-    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-  });
-}
-
-function onSchoolInput() {
-  const q = normalizeText(elements.schoolSearch.value);
-  state.selectedSchool = '';
-  updateClearButton();
-  updateSubmitAvailability();
-
-  if (!q) {
-    elements.schoolHint.textContent = '학교명을 정확히 입력하거나 목록에서 선택해 주세요.';
-    elements.missingSchoolBox.hidden = true;
-    showSchoolOptions(state.schools.slice(0, 12));
-    return;
-  }
-
-  const matches = state.schools.filter((name) => normalizeText(name).includes(q)).slice(0, 20);
-  if (matches.length) {
-    elements.schoolHint.textContent = '목록에서 학교를 선택해 주세요.';
-    elements.missingSchoolBox.hidden = true;
-    showSchoolOptions(matches);
-  } else {
-    hideSchoolOptions();
-    elements.schoolHint.textContent = '목록에 없는 학교예요. 아래 버튼으로 바로 체험할 수 있어요.';
-    elements.missingSchoolBox.hidden = false;
-  }
-}
-
-function onSchoolKeydown(e) {
-  if (e.key === 'Enter') {
-    const first = elements.schoolOptions.querySelector('button');
-    if (first) {
-      e.preventDefault();
-      first.click();
-    }
-  }
-  if (e.key === 'Escape') hideSchoolOptions();
-}
-
-function showSchoolOptions(matches) {
-  elements.schoolOptions.innerHTML = '';
-  matches.forEach((name) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = name;
-    btn.addEventListener('click', () => selectSchool(name));
-    elements.schoolOptions.appendChild(btn);
-  });
-  elements.schoolOptions.hidden = false;
-  elements.schoolSearch.setAttribute('aria-expanded', 'true');
-}
-
-function hideSchoolOptions() {
-  elements.schoolOptions.hidden = true;
-  elements.schoolSearch.setAttribute('aria-expanded', 'false');
-}
-
-function selectSchool(name) {
-  state.selectedSchool = name;
-  elements.schoolSearch.value = name;
-  elements.schoolHint.textContent = `${name} 선택됨`;
-  elements.missingSchoolBox.hidden = true;
-  hideSchoolOptions();
-  updateClearButton();
-  updateSubmitAvailability();
-}
-
-function selectCustomSchool() {
-  const name = elements.schoolSearch.value.trim();
-  if (name.length < 2) {
-    showError('학교명을 두 글자 이상 입력해 주세요.');
-    return;
-  }
-  clearError();
-  selectSchool(name);
-  elements.schoolHint.textContent = `${name} 이름으로 체험해요. (공식 목록 미등록)`;
-}
-
-function clearSchool() {
-  elements.schoolSearch.value = '';
-  state.selectedSchool = '';
-  elements.schoolHint.textContent = '학교명을 정확히 입력하거나 목록에서 선택해 주세요.';
-  elements.missingSchoolBox.hidden = true;
-  updateClearButton();
-  updateSubmitAvailability();
-  elements.schoolSearch.focus();
-}
-
-function updateClearButton() {
-  elements.clearSchool.style.visibility = elements.schoolSearch.value ? 'visible' : 'hidden';
-}
-
-function updateSubmitAvailability() {
-  const gpaValue = Number(elements.gpaInput.value);
-  const validGpa = elements.gpaInput.value !== '' && Number.isFinite(gpaValue) && gpaValue >= 0 && gpaValue <= state.currentScale;
-  const ready = !!state.selectedSchool && validGpa;
-  elements.submitBtn.disabled = !ready;
-  elements.submitBtn.style.opacity = ready ? '1' : '.55';
-}
-
-function handleSubmit(e) {
-  e.preventDefault();
-  clearError();
-  const raw = elements.gpaInput.value.trim();
-  const gpaValue = Number(raw);
-
-  if (!state.selectedSchool) {
-    showError('학교를 먼저 선택해 주세요.');
-    elements.schoolSearch.focus();
-    return;
-  }
-  if (raw === '' || !Number.isFinite(gpaValue)) {
-    showError('학점을 입력해 주세요.');
-    elements.gpaInput.focus();
-    return;
-  }
-  if (gpaValue < 0 || gpaValue > state.currentScale) {
-    showError(`${state.currentScale.toFixed(1)} 기준에 맞는 학점을 입력해 주세요.`);
-    elements.gpaInput.focus();
-    return;
-  }
-
-  const converted = to45Scale(gpaValue, state.currentScale);
-  if (elements.storeConsent.checked) {
-    saveRecord({ school: state.selectedSchool, gpa: converted, createdAt: Date.now() });
-  }
-
-  state.currentTab = 'national';
-  setTabUI();
-  elements.entryPage.hidden = true;
-  elements.resultPage.hidden = false;
-  updateResultView(true);
-  openModal();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function backToEntry() {
-  elements.resultPage.hidden = true;
-  elements.entryPage.hidden = false;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function switchTab(tab) {
-  state.currentTab = tab;
-  setTabUI();
-  updateResultView(false);
-}
-
-function setTabUI() {
-  const national = state.currentTab === 'national';
-  elements.tabNational.classList.toggle('active', national);
-  elements.tabSchool.classList.toggle('active', !national);
-  elements.tabNational.setAttribute('aria-selected', national ? 'true' : 'false');
-  elements.tabSchool.setAttribute('aria-selected', national ? 'false' : 'true');
-}
-
-function updateResultView(resetScroll) {
-  const inputValue = Number(elements.gpaInput.value);
-  const converted = to45Scale(inputValue, state.currentScale);
-  const schoolName = state.selectedSchool || '우리 학교';
-  const anchors = getAnchors();
-
-  renderHeadline(converted);
-  elements.resultScore.innerHTML = `내 평균 학점 <b>${inputValue.toFixed(2)}</b> / ${state.currentScale.toFixed(1)}${state.currentScale === 4.3 ? ` <small class="score-convert">→ ${converted.toFixed(2)} / 4.5</small>` : ''}`;
-  elements.labelHead.textContent = anchors.head.toFixed(2);
-  elements.labelShoulder.textContent = anchors.shoulder.toFixed(2);
-  elements.labelBelly.textContent = anchors.belly.toFixed(2);
-  elements.labelFeet.textContent = anchors.feet.toFixed(2);
-  elements.capybaraImg.src = pickMascot(converted);
-  elements.capybaraImg.alt = `${schoolName} 비교 결과에 따른 카피바라`;
-  positionMyLine(converted, anchors);
-  if (resetScroll) elements.resultPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function renderHeadline(score45) {
-  let text = '';
-  if (score45 >= 3.9) text = '상승세 좋다~ <span>📈</span>';
-  else if (score45 >= 3.3) text = '흐름 좋다~ <span>😏</span>';
-  else if (score45 >= 2.4) text = '조정 구간이다~ <span>🤔</span>';
-  else text = '반등 노려보자~ <span>🥲</span>';
-  elements.resultHeadline.innerHTML = text;
-}
-
-function pickMascot(score45) {
-  if (score45 >= 3.9) return 'assets/capybara-heart.png';
-  if (score45 >= 3.3) return 'assets/capybara-smile.png';
-  if (score45 >= 2.4) return 'assets/capybara-thinking.png';
-  return 'assets/capybara-crying.png';
-}
-
-function getAnchors() {
-  if (state.currentTab === 'school') {
-    const data = loadRecords().filter((item) => item.school === state.selectedSchool);
-    if (data.length >= 4) {
-      const values = data.map((item) => item.gpa).sort((a, b) => b - a);
-      return {
-        head: 4.5,
-        shoulder: percentile(values, 0.25),
-        belly: percentile(values, 0.5),
-        feet: Math.max(0, percentile(values, 0.85)),
-      };
-    }
-    return schoolFallbackAnchors;
-  }
-  const data = loadRecords();
-  if (data.length >= 8) {
-    const values = data.map((item) => item.gpa).sort((a, b) => b - a);
-    return {
-      head: 4.5,
-      shoulder: percentile(values, 0.25),
-      belly: percentile(values, 0.5),
-      feet: Math.max(0, percentile(values, 0.85)),
-    };
-  }
-  return nationalDefaultAnchors;
-}
-
-function positionMyLine(score45, anchors) {
-  const map = currentLineMap();
-  const points = [
-    { score: anchors.head, y: map.head },
-    { score: anchors.shoulder, y: map.shoulder },
-    { score: anchors.belly, y: map.belly },
-    { score: anchors.feet, y: map.feet },
-  ];
-
-  let y = map.feet;
-  if (score45 >= points[0].score) y = points[0].y;
-  else if (score45 <= points[3].score) y = points[3].y;
-  else {
-    for (let i = 0; i < points.length - 1; i++) {
-      const a = points[i];
-      const b = points[i + 1];
-      if (score45 <= a.score && score45 >= b.score) {
-        const ratio = (a.score - score45) / (a.score - b.score || 1);
-        y = a.y + ratio * (b.y - a.y);
-        break;
-      }
-    }
-  }
-  elements.myLine.style.top = `${y}px`;
-}
-
-function openModal() {
-  state.lastFocus = document.activeElement;
-  elements.promoModal.hidden = false;
-  document.body.style.overflow = 'hidden';
-}
-
-function closeModal() {
-  elements.promoModal.hidden = true;
-  document.body.style.overflow = '';
-  if (state.lastFocus && typeof state.lastFocus.focus === 'function') state.lastFocus.focus();
-}
-
-function saveRecord(record) {
-  const all = loadRecords();
-  all.push(record);
-  localStorage.setItem('my-grade-records', JSON.stringify(all.slice(-300)));
-}
-
-function loadRecords() {
-  try {
-    const raw = localStorage.getItem('my-grade-records');
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function percentile(sortedDescValues, quantile) {
-  if (!sortedDescValues.length) return 0;
-  const idx = Math.min(sortedDescValues.length - 1, Math.max(0, Math.round((sortedDescValues.length - 1) * quantile)));
-  return sortedDescValues[idx];
-}
-
-function to45Scale(value, scale) {
-  return Number(((value * 4.5) / scale).toFixed(2));
-}
-
-function normalizeText(text) {
-  return text.trim().replace(/\s+/g, '').toLowerCase();
-}
-
-function showError(message) {
-  elements.formError.hidden = false;
-  elements.formError.textContent = message;
-}
-
-function clearError() {
-  elements.formError.hidden = true;
-  elements.formError.textContent = '';
-}
-
-init();
+function setInfo(title,desc){$('statTitle').textContent=title;$('statDescription').textContent=desc;}
+async function ensureAuth(){let {data:{session},error}=await db.auth.getSession();if(error)throw error;if(!session){const response=await db.auth.signInAnonymously();if(response.error)throw response.error;} }
+async function saveGrade(){ if(customSchool){hasSaved=false;return;} if(!connected){hasSaved=false;return;} await ensureAuth(); const {error}=await db.rpc('save_my_grade',{p_school:school,p_grade:grade,p_scale:scale});if(error)throw error;hasSaved=true; }
+async function loadStats(){latestStats=null;renderVisual();
+ if(customSchool){setInfo('임시 학교 선택 · 체험 모드', '목록에 없는 학교를 직접 입력했어요. 실제 학점 저장이나 전국·학교별 통계 참여는 아직 할 수 없어요. 학교명은 추후 공식 목록에 추가해야 해요.');return;}
+ if(!connected){setInfo('체험 모드 · 실제 비교 데이터 미연결','파란 점선과 구간은 점수 기반 시연용이에요. Supabase 연결 후 실제 참여자 통계로 바뀝니다.');return;}
+ if(!hasSaved){setInfo('체험 모드 · 통계에 참여하지 않았어요','저장에 동의하지 않았거나 저장이 완료되지 않았어요. 파란 점선은 점수 시연용입니다.');return;}
+ try {let {data,error}=await db.rpc('get_grade_summary',{p_scope:tab});if(error)throw error;latestStats=Array.isArray(data)?data[0]:data;
+ if(!latestStats || latestStats.count<30){setInfo(tab==='school'?'우리 학교 비교 데이터 준비 중 🏫':'전국 비교 데이터 준비 중 🎓',`현재 이 범위에 참여자가 ${latestStats?.count??0}명 있어요. 30명 이상 모이면 참여자 기준 위치를 보여줄게요. (아래 캐릭터 위치는 점수 예시)`);latestStats=null;}
+ else{let pc=Number(latestStats.top_percent);latestStats.top_percent=pc;setInfo(`참여자 ${latestStats.count}명 기준 · 상위 약 ${pc.toFixed(1)}%`, `평균 ${Number(latestStats.average_grade).toFixed(2)} / 4.5 · ${tab==='school'?school+' 참여자':'전체 참여자'} 기준이에요. 학교 인증이 없으므로 전체 학생을 대표하지 않아요.`);}
+ }catch(e){latestStats=null;setInfo('통계를 불러오지 못했어요','Supabase SQL 설정과 인터넷 연결을 확인해 주세요.');console.error(e)}renderVisual();}
+function showResult(){ $('backdrop').hidden=true;document.body.style.overflow='';$('entry').hidden=true;$('result').hidden=false;window.scrollTo({top:0,behavior:'smooth'});$('score').textContent=scale===4.3?`내 누적 평균 학점 ${grade.toFixed(2)} / 4.3 → ${normalized.toFixed(2)} / 4.5`:`내 누적 평균 학점 ${normalized.toFixed(2)} / 4.5`;loadStats();}
+function showModal(){modalFocus=document.activeElement;$('backdrop').hidden=false;document.body.style.overflow='hidden';$('closeModal').focus();}
+function closeModal(){if($('backdrop').hidden)return;$('backdrop').hidden=true;document.body.style.overflow='';if(modalFocus?.focus)modalFocus.focus();}
+$('gradeForm').addEventListener('submit',async e=>{e.preventDefault();if(!school||!validGrade()){validate();return;}grade=Number($('gpaInput').value);normalized=Math.round((scale===4.3?grade/4.3*4.5:grade)*100)/100;$('formError').hidden=true;const b=$('checkBtn');b.disabled=true;b.textContent='결과 준비 중…';try{if($('storeConsent').checked && !customSchool) await saveGrade();else hasSaved=false;}catch(err){hasSaved=false;$('formError').hidden=false;$('formError').textContent='학점 저장에 실패했어요. 결과는 체험용으로 표시됩니다. 연결 설정을 확인해 주세요.';console.error(err);}finally{b.textContent='내 학점 위치 확인하기 →';validate();}
+ showResult();showModal();});
+$('closeModal').onclick=closeModal;$('viewResult').onclick=closeModal;
+$('backdrop').addEventListener('click',e=>{if(e.target===$('backdrop'))closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+$('retry').onclick=()=>{closeModal();$('result').hidden=true;$('entry').hidden=false;window.scrollTo(0,0);};
+$('reopen').onclick=showModal;
+function switchTab(next){tab=next;$('tabNational').classList.toggle('active',tab==='national');$('tabSchool').classList.toggle('active',tab==='school');loadStats();}
+$('tabNational').onclick=()=>switchTab('national');$('tabSchool').onclick=()=>switchTab('school');
+$('deleteData').onclick=async()=>{if(!connected){alert('현재는 체험 모드로 데이터가 서버에 저장되지 않았어요.');return;}if(!confirm('서버에 저장된 내 학점 기록을 삭제할까요?'))return;try{await ensureAuth();let {error}=await db.rpc('delete_my_grade');if(error)throw error;hasSaved=false;latestStats=null;alert('내 학점 기록을 삭제했어요.');await loadStats();}catch(e){alert('삭제에 실패했어요. Supabase 연결을 확인해 주세요.');console.error(e);}};
+document.querySelectorAll('a.signup').forEach(a=>a.addEventListener('click',()=>{const event={event:'gemini_signup_click',position:a.dataset.position};console.info('click event (analytics not connected)',event);if(typeof window.gtag==='function')window.gtag('event',event.event,{button_position:event.position});}));
