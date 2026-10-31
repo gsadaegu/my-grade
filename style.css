@@ -128,3 +128,6 @@ img{display:block;max-width:100%}
 
 /* 결과 그래프의 수치 텍스트만 왼쪽으로 16px 이동 */
 .chart-line span{transform:translateX(-16px)}
+
+/* 수치 라벨을 확실히 왼쪽으로: 작은 화면에서도 동일 적용 */
+.chart-line span{transform:translateX(-38px)!important;}
