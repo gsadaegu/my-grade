@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#efefef" />
+  <meta name="description" content="이거 내 학점이야 🥴 - 대학생들 사이 내 학점이 어느 위치인지 재미있게 확인해보는 페이지" />
+  <title>이거 내 학점이야 🥴</title>
+  <link rel="preload" href="team-gemini.png" as="image" />
+  <link rel="preload" href="capybara-heart.png?v=20261031-heartnew4" as="image" />
+  <link rel="preload" href="capybara-smile.png" as="image" />
+  <link rel="preload" href="capybara-thinking.png" as="image" />
+  <link rel="preload" href="capybara-crying.png" as="image" />
+  <link rel="stylesheet" href="style.css?v=20261031-complete3" />
+</head>
+<body>
+  <main class="app-shell">
+    <section id="entryPage" class="page page-entry">
+      <header class="home-hero">
+        <h1>이거<br />내 <span>학점</span>이야 🥴</h1>
+        <p class="hero-sub">대학생들 사이 내 학점<br />고점?<em>↗</em>저점?<i>↘</i></p>
+      </header>
+
+      <a class="top-cta signup-link" href="https://cutly.kr/41im0d" target="_blank" rel="noopener noreferrer" data-position="entry_top">
+        <span>대학생을 위한 <strong>Gemini 12개월 무료</strong> 쿠폰 받기</span>
+        <b>›</b>
+      </a>
+
+      <section class="entry-card">
+        <form id="gradeForm" novalidate>
+          <div class="field-block first-block">
+            <label class="field-title" for="schoolSearch">우리 학교 찾기</label>
+            <div class="search-wrap">
+              <input id="schoolSearch" type="text" autocomplete="off" placeholder="대학교 이름을 검색해주세요" aria-controls="schoolOptions" aria-expanded="false" role="combobox" />
+              <button id="clearSchool" type="button" class="clear-btn" aria-label="입력 지우기">×</button>
+            </div>
+            <div id="schoolOptions" class="school-options" hidden></div>
+            <p id="schoolHint" class="support-text" hidden></p>
+            <div id="missingSchoolBox" class="missing-school" hidden>
+              <strong>학교가 목록에 없나요? 🏫</strong>
+              <p>학교명을 정확히 적고 임시 선택하면, 학교 등록 전에도 학점 결과를 체험할 수 있어요.</p>
+              <button id="useCustomSchool" type="button" class="ghost-action">입력한 학교명으로 체험하기</button>
+              <p class="mini-note">※ 직접 입력한 학교는 공식 목록에 등록되지 않으며, 학점 저장·우리 학교 통계에는 사용되지 않아요.</p>
+            </div>
+          </div>
+
+          <div class="field-block scale-block">
+            <p class="field-title center">학점 기준</p>
+            <div class="pill-toggle" role="group" aria-label="학점 기준 선택">
+              <button type="button" class="scale-btn active" data-scale="4.5" aria-pressed="true">4.5</button>
+              <button type="button" class="scale-btn" data-scale="4.3" aria-pressed="false">4.3</button>
+            </div>
+          </div>
+
+          <div class="field-block gpa-block">
+            <label class="field-title center" for="gpaInput">현재 평균 학점</label>
+            <p class="sub-help">소수점 둘째 자리까지 입력할 수 있어요.</p>
+            <input id="gpaInput" class="gpa-input" type="number" min="0" max="4.5" step="0.01" inputmode="decimal" placeholder="예 : 3.85" />
+          </div>
+
+          <label class="consent-row" for="storeConsent">
+            <input id="storeConsent" type="checkbox" />
+            <span>내 학교명과 학점을 참여자 통계에 활용하는 데 동의해요. (선택)</span>
+          </label>
+
+          <p id="formError" class="form-error" hidden></p>
+
+          <button id="submitBtn" class="main-button" type="submit">두근 두근 결과 보러가기</button>
+
+          <p class="disclaimer">
+            4.3 기준 학점은 결과 확인 시 4.5 기준으로 자동 비례 환산돼요.<br />
+            학교별 공식 환산 방식과 다를 수 있어요.
+          </p>
+        </form>
+      </section>
+
+      <footer class="entry-footer">
+        <img src="team-gemini.png" alt="Team Gemini Google Student Ambassador" class="team-logo" width="2048" height="1309" decoding="async" />
+        <p>대구대학교 Google Student Ambassador · Team Gemini<br />이 사이트는 학생 캠페인 프로젝트이며, 혜택·자격 조건은 공식 페이지를 확인하세요.</p>
+      </footer>
+    </section>
+
+    <section id="resultPage" class="page page-result" hidden>
+      <header class="result-hero">
+        <p class="mini-brand">이거 내 <span>학점</span>이야 🥴</p>
+        <div class="result-title-wrap">
+          <h2 id="resultHeadline">상승세 좋다~ <span>📈</span></h2>
+        </div>
+        <p id="resultScore" class="result-score">내 평균 학점 <b>3.70</b> / 4.5</p>
+      </header>
+
+      <button id="backToEntry" class="sr-only" type="button">학점 다시 입력하기</button>
+      <div class="pill-toggle tabs" role="tablist" aria-label="비교 범위 선택">
+        <button id="tabNational" type="button" class="tab-btn active" aria-selected="true">전국</button>
+        <button id="tabSchool" type="button" class="tab-btn" aria-selected="false">우리 학교</button>
+      </div>
+
+      <section class="chart-card">
+        <div id="chart" class="chart-area" aria-label="카피바라와 함께 보는 학점 위치 비교 그래프">
+          <div class="chart-line head" data-key="head"><span>머리 <b id="labelHead">4.50</b></span></div>
+          <div class="chart-line shoulder" data-key="shoulder"><span>어깨 <b id="labelShoulder">3.54</b></span></div>
+          <div class="chart-line belly" data-key="belly"><span>배 <b id="labelBelly">2.90</b></span></div>
+          <div class="chart-line feet" data-key="feet"><span>발 <b id="labelFeet">1.20</b></span></div>
+          <img id="capybaraImg" class="capybara" src="capybara-heart.png?v=20261031-heartnew4" alt="학점 위치를 보여주는 카피바라" width="941" height="1672" decoding="async" />
+          <div id="myLine" class="my-line"><span class="my-badge">나</span></div>
+        </div>
+      </section>
+
+      <section class="prompt-box">
+        <h3>올 A+ 학과 1등의 <span>GEMINI</span> 공부 프롬프트 공유</h3>
+        <div class="prompt-actions">
+          <a href="https://cutly.kr/iwpaeu" target="_blank" rel="noopener noreferrer">시험공부📚</a>
+          <a href="https://cutly.kr/mp3ys1" target="_blank" rel="noopener noreferrer">과제📄</a>
+        </div>
+      </section>
+
+      <section class="benefit-box">
+        <div class="gemini-star">✦</div>
+        <p>이번 학점은 Gemini <span>대학생 대상 12개월 무료혜택으로 !</span></p>
+        <a class="benefit-button signup-link" href="https://cutly.kr/41im0d" target="_blank" rel="noopener noreferrer" data-position="result_bottom">무료 혜택 확인하기 ↗</a>
+      </section>
+
+      <p class="benefit-note">Google 공식 학생 혜택 페이지로 연결됩니다.</p>
+    </section>
+  </main>
+
+  <script src="app.js?v=20261031-heartnew4" type="module"></script>
+</body>
+</html>
