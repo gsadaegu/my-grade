@@ -77,13 +77,13 @@ img{display:block;max-width:100%}
 
 .chart-card{background:var(--card);border-radius:22px;padding:0 14px;margin-bottom:18px}
 .chart-area{position:relative;height:380px;overflow:hidden}
-.chart-line{position:absolute;left:20px;right:130px;height:1px;background:var(--line)}
+.chart-line{position:absolute;left:20px;right:65px;height:1px;background:var(--line)}
 .chart-line.head{top:27px}.chart-line.shoulder{top:137px}.chart-line.belly{top:247px}.chart-line.feet{top:354px}
-.chart-line span{position:absolute;left:calc(100% + 18px);top:-8px;font-size:11px;font-weight:750;color:#888;white-space:nowrap;letter-spacing:-.15px}
+.chart-line span{position:absolute;left:calc(100% + 12px);top:-8px;font-size:11px;font-weight:750;color:#888;white-space:nowrap;letter-spacing:-.15px}
 .chart-line span b{font-weight:750;color:#888}
 .capybara{position:absolute;left:-4px;top:14px;width:194px;height:356px;object-fit:contain;object-position:center;z-index:1}
-.my-line{position:absolute;left:20px;right:83px;border-top:3px dashed var(--cyan);z-index:2}
-.my-badge{position:absolute;right:-41px;top:-15px;min-width:52px;height:31px;border-radius:999px;background:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#000;letter-spacing:-.25px}
+.my-line{position:absolute;left:20px;right:40px;border-top:2px dashed var(--cyan);z-index:2}
+.my-badge{position:absolute;right:-25px;top:-11px;min-width:26px;height:22px;border-radius:999px;background:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#000;letter-spacing:-.25px}
 
 .prompt-box{background:var(--card);border-radius:22px;padding:16px 18px 14px;text-align:center;margin-bottom:8px}
 .prompt-box h3{margin:0 0 12px;font-size:17px;font-weight:800;line-height:1.15;letter-spacing:-.75px;white-space:nowrap}
@@ -105,11 +105,11 @@ img{display:block;max-width:100%}
   .top-cta{font-size:12px;padding:0 16px}
   .entry-card{padding:28px 18px 18px}
   .consent-row span{white-space:normal}
-  .chart-line{right:113px}
-  .chart-line span{left:calc(100% + 12px)}
+  .chart-line{right:54px}
+  .chart-line span{left:calc(100% + 10px)}
   .capybara{left:-8px;width:184px;height:346px}
-  .my-line{right:72px}
-  .my-badge{right:-36px;min-width:46px}
+  .my-line{right:34px}
+  .my-badge{right:-23px;min-width:26px}
   .prompt-box h3{font-size:15px}
 }
 
@@ -126,8 +126,4 @@ img{display:block;max-width:100%}
   .prompt-box h3{font-size:14px;}
 }
 
-/* 결과 그래프의 수치 텍스트만 왼쪽으로 16px 이동 */
-.chart-line span{transform:translateX(-16px)}
-
-/* 수치 라벨을 확실히 왼쪽으로: 작은 화면에서도 동일 적용 */
-.chart-line span{transform:translateX(-38px)!important;}
+/* 오른쪽 수치 레이블을 카피바라/기준선과 겹치지 않게 이동 */
