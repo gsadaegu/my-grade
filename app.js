@@ -185,7 +185,7 @@ function hideSchoolOptions() {
 function selectSchool(name) {
   state.selectedSchool = name;
   elements.schoolSearch.value = name;
-  updateHint(`${name} 선택됨`);
+  updateHint('');
   elements.missingSchoolBox.hidden = true;
   hideSchoolOptions();
   updateClearButton();
@@ -201,7 +201,7 @@ function selectCustomSchool() {
   clearError();
   state.selectedSchool = name;
   elements.schoolSearch.value = name;
-  updateHint(`“${name}” 이름으로 체험해요.`);
+  updateHint('');
   elements.missingSchoolBox.hidden = true;
   hideSchoolOptions();
   updateClearButton();

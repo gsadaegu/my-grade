@@ -125,3 +125,6 @@ img{display:block;max-width:100%}
   .top-cta{font-size:11px;}
   .prompt-box h3{font-size:14px;}
 }
+
+/* 결과 그래프의 수치 텍스트만 왼쪽으로 16px 이동 */
+.chart-line span{transform:translateX(-16px)}
