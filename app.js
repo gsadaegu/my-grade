@@ -26,6 +26,8 @@ const elements = {
   tabNational: $('#tabNational'),
   tabSchool: $('#tabSchool'),
   resultHeadline: $('#resultHeadline'),
+  participantLabel: $('#participantLabel'),
+  participantCount: $('#participantCount'),
   resultScore: $('#resultScore'),
   backToEntry: $('#backToEntry'),
   labelHead: $('#labelHead'),
@@ -97,6 +99,7 @@ function bindEvents() {
   });
 
   elements.gpaInput.addEventListener('input', updateSubmitAvailability);
+  elements.storeConsent.addEventListener('change', updateSubmitAvailability);
   elements.gradeForm.addEventListener('submit', handleSubmit);
   elements.backToEntry.addEventListener('click', backToEntry);
 
@@ -226,7 +229,7 @@ function updateClearButton() {
 function updateSubmitAvailability() {
   const gpaValue = Number(elements.gpaInput.value);
   const validGpa = elements.gpaInput.value !== '' && Number.isFinite(gpaValue) && gpaValue >= 0 && gpaValue <= state.currentScale;
-  const ready = !!state.selectedSchool && validGpa;
+  const ready = !!state.selectedSchool && validGpa && elements.storeConsent.checked;
   elements.submitBtn.disabled = !ready;
 }
 
@@ -249,6 +252,12 @@ function handleSubmit(e) {
   if (gpaValue < 0 || gpaValue > state.currentScale) {
     showError(`${state.currentScale.toFixed(1)} 기준에 맞는 학점을 입력해 주세요.`);
     elements.gpaInput.focus();
+    return;
+  }
+
+  if (!elements.storeConsent.checked) {
+    showError('결과 확인 동의에 체크해 주세요.');
+    elements.storeConsent.focus();
     return;
   }
 
@@ -278,6 +287,8 @@ function setTabUI() {
   elements.tabSchool.classList.toggle('active', !national);
   elements.tabNational.setAttribute('aria-selected', national ? 'true' : 'false');
   elements.tabSchool.setAttribute('aria-selected', national ? 'false' : 'true');
+  elements.participantLabel.textContent = national ? '현재 참여인원' : `${state.selectedSchool || '우리 학교'} 참여인원`;
+  elements.participantCount.textContent = '집계 준비 중';
 }
 
 function updateResultView() {

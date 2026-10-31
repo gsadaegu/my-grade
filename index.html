@@ -11,7 +11,7 @@
   <link rel="preload" href="capybara-smile.png" as="image" />
   <link rel="preload" href="capybara-thinking.png" as="image" />
   <link rel="preload" href="capybara-crying.png" as="image" />
-  <link rel="stylesheet" href="style.css?v=figma-placement-20261031-3" />
+  <link rel="stylesheet" href="style.css?v=counttabs20261031" />
 <style id="no-school-selection-caption">#schoolHint{display:none!important}</style>
 </head>
 <body>
@@ -60,8 +60,8 @@
           </div>
 
           <label class="consent-row" for="storeConsent">
-            <input id="storeConsent" type="checkbox" />
-            <span>내 학교명과 학점을 참여자 통계에 활용하는 데 동의해요. (선택)</span>
+            <input id="storeConsent" type="checkbox" required />
+            <span>입력한 학점을 결과 화면에 사용하는 데 동의해요. (필수 · 통계 저장 안 함)</span>
           </label>
 
           <p id="formError" class="form-error" hidden></p>
@@ -83,7 +83,7 @@
 
     <section id="resultPage" class="page page-result" hidden>
       <header class="result-hero">
-        <p class="mini-brand">이거 내 <span>학점</span>이야 🥴</p>
+        <div class="participant-counter" aria-live="polite"><span id="participantLabel">현재 참여인원</span><strong id="participantCount">집계 준비 중</strong></div>
         <div class="result-title-wrap">
           <h2 id="resultHeadline">상승세 좋다~ <span>📈</span></h2>
         </div>
@@ -125,6 +125,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=captiongone-20261031-textleft2" type="module"></script>
+  <script src="app.js?v=counttabs20261031" type="module"></script>
 </body>
 </html>

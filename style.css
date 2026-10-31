@@ -127,3 +127,11 @@ img{display:block;max-width:100%}
 }
 
 /* 오른쪽 수치 레이블을 카피바라/기준선과 겹치지 않게 이동 */
+
+/* iOS Safari prevents auto zoom when inputs use >=16px */
+#schoolSearch,#gpaInput{font-size:16px!important}
+
+/* 전국 / 우리 학교 탭에 따라 안내 문구만 변경 - 통계 연동 전 가짜 숫자 노출 방지 */
+.participant-counter{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;margin:0 0 12px;text-align:center;line-height:1.15;}
+.participant-counter span{font-size:14px;font-weight:750;letter-spacing:-.4px;}
+.participant-counter strong{font-size:14px;font-weight:800;letter-spacing:-.3px;color:#777;}
