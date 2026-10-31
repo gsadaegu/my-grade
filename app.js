@@ -38,7 +38,7 @@ const elements = {
 
 const nationalAnchors = { head: 4.5, shoulder: 3.54, belly: 2.90, feet: 1.20 };
 const schoolFallbackAnchors = { head: 4.5, shoulder: 3.78, belly: 3.02, feet: 1.98 };
-const lineTopMap = { head: 43, shoulder: 151, belly: 258, feet: 367 };
+const lineTopMap = { head: 27, shoulder: 137, belly: 247, feet: 354 };
 const assetCache = {};
 
 async function init() {
