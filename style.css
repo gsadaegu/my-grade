@@ -135,3 +135,7 @@ img{display:block;max-width:100%}
 .participant-counter{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;margin:0 0 12px;text-align:center;line-height:1.15;}
 .participant-counter span{font-size:14px;font-weight:750;letter-spacing:-.4px;}
 .participant-counter strong{font-size:14px;font-weight:800;letter-spacing:-.3px;color:#777;}
+
+/* 결과 화면 하단의 다시 입력하기 버튼 */
+.retry-entry{display:block;width:100%;margin:18px 0 8px;padding:13px 12px;border:1px solid #cfcfcf;border-radius:999px;background:#fff;color:#252525;font-size:14px;font-weight:750;text-align:center;cursor:pointer}
+.retry-entry:active{background:#e8e8e8}
