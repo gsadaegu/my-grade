@@ -81,7 +81,7 @@ img{display:block;max-width:100%}
 .chart-line.head{top:27px}.chart-line.shoulder{top:137px}.chart-line.belly{top:247px}.chart-line.feet{top:354px}
 .chart-line span{position:absolute;left:calc(100% + 18px);top:-8px;font-size:11px;font-weight:750;color:#888;white-space:nowrap;letter-spacing:-.15px}
 .chart-line span b{font-weight:750;color:#888}
-.capybara{position:absolute;left:24px;top:14px;width:194px;height:356px;object-fit:contain;object-position:center;z-index:1}
+.capybara{position:absolute;left:-4px;top:14px;width:194px;height:356px;object-fit:contain;object-position:center;z-index:1}
 .my-line{position:absolute;left:20px;right:83px;border-top:3px dashed var(--cyan);z-index:2}
 .my-badge{position:absolute;right:-41px;top:-15px;min-width:52px;height:31px;border-radius:999px;background:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#000;letter-spacing:-.25px}
 
@@ -107,7 +107,7 @@ img{display:block;max-width:100%}
   .consent-row span{white-space:normal}
   .chart-line{right:113px}
   .chart-line span{left:calc(100% + 12px)}
-  .capybara{left:20px;width:184px;height:346px}
+  .capybara{left:-8px;width:184px;height:346px}
   .my-line{right:72px}
   .my-badge{right:-36px;min-width:46px}
   .prompt-box h3{font-size:15px}
@@ -121,7 +121,7 @@ img{display:block;max-width:100%}
   .chart-card{margin-bottom:8px;}
 }
 @media (max-width:365px){
-  .capybara{left:18px;top:20px;bottom:auto;width:174px;height:341px;}
+  .capybara{left:-10px;top:20px;bottom:auto;width:174px;height:341px;}
   .top-cta{font-size:11px;}
   .prompt-box h3{font-size:14px;}
 }
