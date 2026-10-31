@@ -139,3 +139,18 @@ img{display:block;max-width:100%}
 /* 결과 화면 하단의 다시 입력하기 버튼 */
 .retry-entry{display:block;width:100%;margin:18px 0 8px;padding:13px 12px;border:1px solid #cfcfcf;border-radius:999px;background:#fff;color:#252525;font-size:14px;font-weight:750;text-align:center;cursor:pointer}
 .retry-entry:active{background:#e8e8e8}
+
+/* 피그마 iPhone17-4 팝업: 결과 페이지를 보이는 상태로 두고 위에 오버레이 */
+.gemini-popup-overlay[hidden]{display:none!important}
+.gemini-popup-overlay{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(0,0,0,.78)}
+.gemini-popup{position:relative;width:min(100%,430px);min-height:500px;border-radius:23px;background:#000;color:#fff;text-align:center;padding:46px 24px 30px;display:flex;flex-direction:column;align-items:center}
+.gemini-popup-close{position:absolute;top:16px;right:17px;border:0;background:transparent;color:#fff;font-size:30px;line-height:1;width:32px;height:32px;font-weight:300;cursor:pointer}
+.gemini-popup-logo{display:block;width:82px;height:82px;object-fit:contain;margin:0 auto 22px}
+.gemini-popup-kicker{margin:0 0 17px;font-size:17px;font-weight:750;letter-spacing:-.5px}
+.gemini-popup h2{margin:0;color:var(--cyan);font-size:38px;font-weight:850;line-height:1.17;letter-spacing:-1.3px}
+.gemini-popup-desc{font-size:16px;line-height:1.5;color:#a5a5a5;margin:30px 0 28px;letter-spacing:-.35px}
+.gemini-popup-cta{display:flex;align-items:center;justify-content:center;min-height:62px;width:100%;border-radius:999px;background:var(--cyan);color:#000;font-size:16px;font-weight:850;letter-spacing:-.35px}
+.gemini-popup-footnote{margin:22px 0 0;color:#888;font-size:11px;letter-spacing:-.25px}
+.gemini-popup-terms{margin:11px 0 0;color:#666;font-size:9px;line-height:1.4;letter-spacing:-.3px}
+@media(max-width:365px){.gemini-popup{padding:42px 20px 24px;min-height:475px}.gemini-popup h2{font-size:34px}.gemini-popup-logo{width:74px;height:74px}}
+@media(max-height:610px){.gemini-popup{min-height:auto;padding-top:36px;padding-bottom:18px}.gemini-popup-logo{width:58px;height:58px;margin-bottom:12px}.gemini-popup-desc{margin:18px 0}}

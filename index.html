@@ -11,7 +11,7 @@
   <link rel="preload" href="capybara-smile.png" as="image" />
   <link rel="preload" href="capybara-thinking.png" as="image" />
   <link rel="preload" href="capybara-crying.png" as="image" />
-  <link rel="stylesheet" href="style.css?v=retrybtn20261031" />
+  <link rel="stylesheet" href="style.css?v=gemini-popup-v1" />
 <style id="no-school-selection-caption">#schoolHint{display:none!important}</style>
 </head>
 <body>
@@ -125,6 +125,21 @@
     </section>
   </main>
 
-  <script src="app.js?v=counttabs20261031" type="module"></script>
+
+  <!-- 학점 결과 공개 직전에 나타나는 Gemini 팝업 -->
+  <div id="geminiPopup" class="gemini-popup-overlay" hidden>
+    <section class="gemini-popup" role="dialog" aria-modal="true" aria-labelledby="geminiPopupTitle" aria-describedby="geminiPopupDesc">
+      <button id="geminiPopupClose" class="gemini-popup-close" type="button" aria-label="팝업 닫고 결과 보기">×</button>
+      <img class="gemini-popup-logo" src="gemini-star.png" alt="Gemini 로고" width="82" height="82" />
+      <p class="gemini-popup-kicker">학점 구원자 등장</p>
+      <h2 id="geminiPopupTitle">Google Gemini<br />12개월 무료</h2>
+      <p id="geminiPopupDesc" class="gemini-popup-desc">작년에 무료 체험 썼다고<br />올해는 못쓰냐고? 아니 가능해!</p>
+      <a href="https://cutly.kr/41im0d" class="gemini-popup-cta signup-link" data-position="result_popup" target="_blank" rel="noopener noreferrer">무료 혜택 쓰러가기 ↗</a>
+      <p class="gemini-popup-footnote">Google 공식 학생 혜택 페이지로 연결됩니다.</p>
+      <p class="gemini-popup-terms">자격 충족 학생 대상 · 학생 인증 및 결제 수단 등록 필요<br />무료 기간 종료 후 취소하지 않으면 유료 전환</p>
+    </section>
+  </div>
+
+  <script src="app.js?v=gemini-popup-v1" type="module"></script>
 </body>
 </html>

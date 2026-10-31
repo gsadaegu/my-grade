@@ -30,6 +30,8 @@ const elements = {
   participantCount: $('#participantCount'),
   resultScore: $('#resultScore'),
   backToEntry: $('#backToEntry'),
+  geminiPopup: $('#geminiPopup'),
+  geminiPopupClose: $('#geminiPopupClose'),
   labelHead: $('#labelHead'),
   labelShoulder: $('#labelShoulder'),
   labelBelly: $('#labelBelly'),
@@ -102,6 +104,13 @@ function bindEvents() {
   elements.storeConsent.addEventListener('change', updateSubmitAvailability);
   elements.gradeForm.addEventListener('submit', handleSubmit);
   elements.backToEntry.addEventListener('click', backToEntry);
+  elements.geminiPopupClose.addEventListener('click', closeGeminiPopup);
+  elements.geminiPopup.addEventListener('click', (event) => {
+    if (event.target === elements.geminiPopup) closeGeminiPopup();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !elements.geminiPopup.hidden) closeGeminiPopup();
+  });
 
   elements.tabNational.addEventListener('click', () => switchTab('national'));
   elements.tabSchool.addEventListener('click', () => switchTab('school'));
@@ -266,6 +275,7 @@ function handleSubmit(e) {
   elements.entryPage.hidden = true;
   elements.resultPage.hidden = false;
   updateResultView();
+  openGeminiPopup();
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
@@ -381,3 +391,14 @@ function clearError() {
 }
 
 init();
+
+function openGeminiPopup(){
+  elements.geminiPopup.hidden = false;
+  document.body.style.overflow = 'hidden';
+  elements.geminiPopupClose.focus();
+}
+function closeGeminiPopup(){
+  elements.geminiPopup.hidden = true;
+  document.body.style.overflow = '';
+  window.scrollTo({top:0,behavior:'instant'});
+}
