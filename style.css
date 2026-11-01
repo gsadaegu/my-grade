@@ -154,3 +154,10 @@ img{display:block;max-width:100%}
 .gemini-popup-terms{margin:11px 0 0;color:#666;font-size:9px;line-height:1.4;letter-spacing:-.3px}
 @media(max-width:365px){.gemini-popup{padding:42px 20px 24px;min-height:475px}.gemini-popup h2{font-size:34px}.gemini-popup-logo{width:74px;height:74px}}
 @media(max-height:610px){.gemini-popup{min-height:auto;padding-top:36px;padding-bottom:18px}.gemini-popup-logo{width:58px;height:58px;margin-bottom:12px}.gemini-popup-desc{margin:18px 0}}
+
+/* 필수 학점 저장 동의 안내 */
+.required-store{align-items:flex-start;margin-top:18px;margin-bottom:18px}
+.required-store input{margin-top:3px}
+.required-store span{font-size:11px;line-height:1.6;white-space:normal;color:#626262;letter-spacing:-.2px}
+.required-store strong{color:#303030;font-size:12px}
+.save-notice{font-size:11px;line-height:1.5;margin:0 7px 12px;color:#444}

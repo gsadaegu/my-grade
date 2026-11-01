@@ -20,6 +20,7 @@ const elements = {
   useCustomSchool: $('#useCustomSchool'),
   gpaInput: $('#gpaInput'),
   storeConsent: $('#storeConsent'),
+  saveNotice: $('#saveNotice'),
   formError: $('#formError'),
   submitBtn: $('#submitBtn'),
   scaleButtons: $$('.scale-btn'),
@@ -242,7 +243,7 @@ function updateSubmitAvailability() {
   elements.submitBtn.disabled = !ready;
 }
 
-function handleSubmit(e) {
+async function handleSubmit(e) {
   e.preventDefault();
   clearError();
   const raw = elements.gpaInput.value.trim();
@@ -265,10 +266,28 @@ function handleSubmit(e) {
   }
 
   if (!elements.storeConsent.checked) {
-    showError('결과 확인 동의에 체크해 주세요.');
+    showError('학점 통계 참여 및 저장에 동의해야 참여할 수 있어요.');
     elements.storeConsent.focus();
     return;
   }
+
+  // 저장에 성공한 제출만 참여로 처리합니다. 실패하면 결과 화면으로 넘어가지 않습니다.
+  elements.submitBtn.disabled = true;
+  elements.saveNotice.hidden = false;
+  elements.saveNotice.textContent = '학점 데이터를 안전하게 제출하고 있어요…';
+  const saved = await saveGradeSubmission({
+    school_name: state.selectedSchool,
+    gpa: gpaValue,
+    gpa_scale: state.currentScale
+  });
+  if (!saved.ok) {
+    elements.saveNotice.textContent = saved.message || '저장에 실패했어요. 연결을 확인해 주세요.';
+    showError(saved.message || '데이터 저장에 실패하여 참여가 완료되지 않았어요.');
+    updateSubmitAvailability();
+    return;
+  }
+  elements.saveNotice.textContent = '통계 참여가 완료됐어요.';
+  updateSubmitAvailability();
 
   state.currentTab = 'national';
   setTabUI();
@@ -401,4 +420,52 @@ function closeGeminiPopup(){
   elements.geminiPopup.hidden = true;
   document.body.style.overflow = '';
   window.scrollTo({top:0,behavior:'instant'});
+}
+
+// 공개용 정보만 사용합니다. 관리자 비밀 키는 클라이언트에 절대 넣지 마세요.
+let supabaseClientPromise;
+async function getSupabaseClient() {
+  const config = window.MY_GRADE_SUPABASE || {};
+  const url = String(config.url || '').trim().replace(/\/$/, '');
+  const key = String(config.publishableKey || '').trim();
+  if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url) || !key.startsWith('sb_publishable_')) {
+    throw new Error('Supabase 프로젝트 URL 또는 공개용 키 설정을 확인해 주세요.');
+  }
+  if (!supabaseClientPromise) {
+    supabaseClientPromise = import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/+esm')
+      .then(({ createClient }) => createClient(url, key, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+      }));
+  }
+  return supabaseClientPromise;
+}
+
+async function saveGradeSubmission(payload) {
+  try {
+    const client = await getSupabaseClient();
+    let { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError) throw sessionError;
+    if (!session?.user || !session.user.is_anonymous) {
+      const signIn = await client.auth.signInAnonymously();
+      if (signIn.error) throw signIn.error;
+      session = signIn.data.session;
+    }
+    if (!session?.user?.id || !session.user.is_anonymous) throw new Error('익명 인증에 실패했어요.');
+
+    const { error } = await client.from('grade_submissions').insert({
+      ...payload,
+      user_id: session.user.id
+    });
+    if (error) {
+      if (error.code === '23505') {
+        return { ok: false, message: '이 브라우저에서는 이미 학점 제출을 완료했어요. 한 번만 참여할 수 있어요.' };
+      }
+      console.warn('제출 실패 (코드):', error.code);
+      return { ok: false, message: '저장하지 못했어요. 연결 상태나 Supabase 정책을 확인해 주세요.' };
+    }
+    return { ok: true };
+  } catch (error) {
+    console.warn('학점 제출 연결 실패:', error?.message || error);
+    return { ok: false, message: '연결에 실패했어요. 인터넷 연결과 Supabase 설정을 확인해 주세요.' };
+  }
 }
