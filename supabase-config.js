@@ -4,6 +4,6 @@
 // 주의: GitHub Pages의 이 값들은 브라우저에서 누구나 볼 수 있습니다.
 // Secret key / service_role 키는 절대 넣지 마세요.
 window.MY_GRADE_SUPABASE = {
-  url: 'https://nlqrciosueapkodhcisk.supabase.co/rest/v1/',
+  url: 'https://nlqrciosueapkodhcisk.supabase.co',
   publishableKey: 'sb_publishable_hF5jhDHb0pcTvtH1TcuorQ_tdjr3J1j'
 };
